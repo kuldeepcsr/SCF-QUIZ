@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supply Chain Finance Quiz</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; background: #f0f4f8; min-height: 100vh; color: #1a202c; }
+  .container { max-width: 780px; margin: 0 auto; padding: 2rem 1rem; }
+
+  .header { background: #1e3a5f; color: white; padding: 2rem; border-radius: 12px; text-align: center; margin-bottom: 2rem; }
+  .header h1 { font-size: 1.6rem; margin-bottom: 0.4rem; }
+  .header p { font-size: 0.9rem; opacity: 0.8; }
+
+  .card { background: white; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+  label { display: block; font-size: 0.85rem; font-weight: 600; color: #4a5568; margin-bottom: 0.4rem; margin-top: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  label:first-of-type { margin-top: 0; }
+  input[type="text"], input[type="email"] {
+    width: 100%; padding: 0.65rem 0.9rem; border: 1.5px solid #cbd5e0;
+    border-radius: 8px; font-size: 1rem; outline: none; transition: border 0.2s;
+  }
+  input:focus { border-color: #1e3a5f; }
+
+  .btn {
+    display: inline-block; padding: 0.7rem 2rem; background: #1e3a5f; color: white;
+    border: none; border-radius: 8px; font-size: 1rem; cursor: pointer;
+    margin-top: 1.5rem; transition: background 0.2s;
+  }
+  .btn:hover { background: #2d5282; }
+  .btn:disabled { background: #a0aec0; cursor: not-allowed; }
+
+  .progress-bar-wrap { background: #e2e8f0; border-radius: 99px; height: 8px; margin-bottom: 1.5rem; }
+  .progress-bar { background: #1e3a5f; height: 8px; border-radius: 99px; transition: width 0.3s; }
+  .progress-label { font-size: 0.82rem; color: #718096; margin-bottom: 0.4rem; }
+
+  .question-text { font-size: 1.05rem; font-weight: 600; margin-bottom: 1.2rem; line-height: 1.5; color: #1a202c; }
+  .q-number { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: #718096; margin-bottom: 0.4rem; }
+
+  .options { display: flex; flex-direction: column; gap: 0.6rem; }
+  .option-btn {
+    padding: 0.75rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 8px;
+    background: white; cursor: pointer; text-align: left; font-size: 0.95rem;
+    transition: background 0.15s, border-color 0.15s; color: #2d3748;
+  }
+  .option-btn:hover:not(:disabled) { background: #ebf4ff; border-color: #90cdf4; }
+  .option-btn.correct { background: #f0fff4; border-color: #68d391; color: #276749; font-weight: 600; }
+  .option-btn.wrong { background: #fff5f5; border-color: #fc8181; color: #c53030; }
+  .option-btn.reveal { background: #f0fff4; border-color: #68d391; color: #276749; }
+  .option-btn:disabled { cursor: default; }
+
+  .feedback { font-size: 0.88rem; margin-top: 0.8rem; padding: 0.6rem 0.9rem; border-radius: 6px; }
+  .feedback.correct-msg { background: #f0fff4; color: #276749; }
+  .feedback.wrong-msg { background: #fff5f5; color: #c53030; }
+
+  .nav-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; }
+  .nav-btn {
+    padding: 0.55rem 1.4rem; border: 1.5px solid #1e3a5f; border-radius: 8px;
+    background: white; color: #1e3a5f; font-size: 0.9rem; cursor: pointer; transition: background 0.15s;
+  }
+  .nav-btn:hover { background: #ebf4ff; }
+  .nav-btn:disabled { border-color: #cbd5e0; color: #a0aec0; cursor: default; background: white; }
+  .nav-btn.primary { background: #1e3a5f; color: white; }
+  .nav-btn.primary:hover { background: #2d5282; }
+
+  /* Results */
+  .score-ring { text-align: center; margin: 1.5rem 0; }
+  .score-big { font-size: 3rem; font-weight: 700; color: #1e3a5f; }
+  .score-sub { font-size: 1rem; color: #718096; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0; }
+  .stat-card { background: #f7fafc; border-radius: 10px; padding: 1rem; text-align: center; }
+  .stat-val { font-size: 1.6rem; font-weight: 700; }
+  .stat-label { font-size: 0.78rem; color: #718096; margin-top: 0.2rem; }
+  .stat-correct .stat-val { color: #276749; }
+  .stat-wrong .stat-val { color: #c53030; }
+  .stat-skip .stat-val { color: #dd6b20; }
+
+  .grade-badge {
+    display: inline-block; padding: 0.4rem 1.2rem; border-radius: 99px;
+    font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem;
+  }
+  .grade-a { background: #c6f6d5; color: #22543d; }
+  .grade-b { background: #bee3f8; color: #2a4365; }
+  .grade-c { background: #fefcbf; color: #744210; }
+  .grade-d { background: #fed7d7; color: #742a2a; }
+
+  canvas { max-width: 100%; }
+  .chart-wrap { margin: 1.5rem 0; }
+
+  .download-btn {
+    display: inline-block; padding: 0.7rem 2rem; background: #276749; color: white;
+    border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; margin-top: 0.5rem;
+    transition: background 0.2s;
+  }
+  .download-btn:hover { background: #2f855a; }
+
+  .error-msg { color: #c53030; font-size: 0.85rem; margin-top: 0.4rem; display: none; }
+
+  .section-title { font-size: 1.15rem; font-weight: 700; color: #1e3a5f; margin-bottom: 1rem; }
+
+  #page-register, #page-quiz, #page-result { display: none; }
+
+  .review-item { border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; }
+  .review-q { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.4rem; }
+  .review-ans { font-size: 0.82rem; }
+  .review-correct { color: #276749; }
+  .review-wrong { color: #c53030; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- REGISTER PAGE -->
+  <div id="page-register">
+    <div class="header">
+      <h1>Supply Chain Finance Quiz</h1>
+      <p>50 Questions &nbsp;|&nbsp; Working Capital, SCF Tools &amp; Fintech</p>
+    </div>
+    <div class="card">
+      <div class="section-title">Student Registration</div>
+      <label for="inp-name">Full Name</label>
+      <input type="text" id="inp-name" placeholder="Enter your full name">
+      <div class="error-msg" id="err-name">Please enter your full name.</div>
+
+      <label for="inp-roll">Roll Number</label>
+      <input type="text" id="inp-roll" placeholder="e.g. 2024MBA001">
+      <div class="error-msg" id="err-roll">Please enter your roll number.</div>
+
+      <label for="inp-email">Email Address</label>
+      <input type="email" id="inp-email" placeholder="you@example.com">
+      <div class="error-msg" id="err-email">Please enter a valid email address.</div>
+      <div class="error-msg" id="err-duplicate">This email and name combination has already taken the quiz.</div>
+
+      <button class="btn" onclick="startQuiz()">Begin Quiz &rarr;</button>
+    </div>
+  </div>
+
+  <!-- QUIZ PAGE -->
+  <div id="page-quiz">
+    <div class="header">
+      <h1>Supply Chain Finance Quiz</h1>
+      <p id="quiz-student-name"></p>
+    </div>
+    <div class="card">
+      <div class="progress-label" id="prog-label">Question 1 of 50</div>
+      <div class="progress-bar-wrap"><div class="progress-bar" id="prog-bar" style="width:2%"></div></div>
+      <div class="q-number" id="q-number">Q1</div>
+      <div class="question-text" id="q-text"></div>
+      <div class="options" id="q-options"></div>
+      <div class="feedback" id="q-feedback" style="display:none"></div>
+      <div class="nav-row">
+        <button class="nav-btn" id="btn-prev" onclick="prevQ()" disabled>&#8592; Previous</button>
+        <button class="nav-btn primary" id="btn-next" onclick="nextQ()">Next &#8594;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULT PAGE -->
+  <div id="page-result">
+    <div class="header">
+      <h1>Quiz Complete!</h1>
+      <p id="res-student"></p>
+    </div>
+    <div class="card">
+      <div style="text-align:center">
+        <div id="res-grade" class="grade-badge"></div>
+        <div class="score-big" id="res-score"></div>
+        <div class="score-sub">out of 50 marks</div>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card stat-correct"><div class="stat-val" id="res-correct"></div><div class="stat-label">Correct</div></div>
+        <div class="stat-card stat-wrong"><div class="stat-val" id="res-wrong"></div><div class="stat-label">Wrong</div></div>
+        <div class="stat-card stat-skip"><div class="stat-val" id="res-skip"></div><div class="stat-label">Unanswered</div></div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="result-chart" height="180"></canvas>
+      </div>
+      <div style="text-align:center; margin-top:1rem;">
+        <button class="download-btn" onclick="downloadReport()">&#8595; Download Report (PDF)</button>
+      </div>
+      <div style="margin-top:1.2rem; padding:1.2rem; background:#ebf8ff; border-radius:10px; border:1.5px solid #90cdf4; text-align:center;" id="submit-section">
+        <div style="font-size:0.9rem; color:#2b6cb0; font-weight:600; margin-bottom:0.6rem;">📤 Submit your score to the teacher</div>
+        <button class="btn" id="submit-btn" onclick="submitToSheets()" style="margin-top:0; background:#2b6cb0;">Submit Score to Google Sheets</button>
+        <div id="submit-status" style="margin-top:0.8rem; font-size:0.88rem; display:none;"></div>
+      </div>
+    </div>
+
+    <div class="card" id="review-section">
+      <div class="section-title">Question Review</div>
+      <div id="review-list"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const QUESTIONS = [
+  {q:"Working capital primarily refers to:",o:["Fixed assets","Long-term investments","Current assets minus current liabilities","Profit after tax"],a:2},
+  {q:"Which of the following is a current asset?",o:["Machinery","Inventory","Land","Building"],a:1},
+  {q:"Factoring involves:",o:["Borrowing against fixed assets","Selling receivables to a financier","Issuing shares","Buying inventory"],a:1},
+  {q:"Reverse factoring is initiated by:",o:["Supplier","Bank","Buyer","Government"],a:2},
+  {q:"TReDS platform is regulated by:",o:["SEBI","RBI","IRDA","NABARD"],a:1},
+  {q:"Which is NOT a current liability?",o:["Creditors","Bills payable","Equity share capital","Bank overdraft"],a:2},
+  {q:"Operating cycle begins with:",o:["Sales","Cash collection","Purchase of raw materials","Profit calculation"],a:2},
+  {q:"Inventory financing provides funds against:",o:["Cash","Machinery","Stock","Land"],a:2},
+  {q:"ROI is calculated as:",o:["Profit / Sales","Profit / Total Assets","Sales / Assets","Assets / Profit"],a:1},
+  {q:"Dynamic discounting benefits:",o:["Only banks","Only government","Both buyers and suppliers","Only suppliers"],a:2},
+  {q:"Which platform is part of TReDS?",o:["Paytm","RXIL","PhonePe","Razorpay"],a:1},
+  {q:"MSMEs use SCF mainly for:",o:["Long-term investment","Liquidity support","Tax savings","Branding"],a:1},
+  {q:"Current liabilities are payable within:",o:["5 years","3 years","1 year","10 years"],a:2},
+  {q:"Which is a fintech SCF provider?",o:["SBI","ICICI","KredX","LIC"],a:2},
+  {q:"Working capital cycle measures:",o:["Profitability","Liquidity duration","Market share","Sales growth"],a:1},
+  {q:"A firm reduces inventory levels. What is the impact?",o:["Liquidity increases","Risk increases","Profit decreases","No impact"],a:1},
+  {q:"A company uses reverse factoring. Supplier benefit is:",o:["Delayed payment","Early cash flow","Higher taxes","More inventory"],a:1},
+  {q:"If receivables period increases, working capital requirement will:",o:["Decrease","Increase","Remain same","Become zero"],a:1},
+  {q:"A firm delays supplier payments. This will:",o:["Increase cash outflow","Reduce liquidity","Improve cash position","Reduce profit"],a:2},
+  {q:"A company adopts Policy C (low current assets). Profitability will be:",o:["Low","Moderate","High","Zero"],a:2},
+  {q:"High inventory leads to:",o:["Low holding cost","High liquidity pressure","Zero risk","No effect"],a:1},
+  {q:"Use of TReDS will:",o:["Increase collateral requirement","Reduce transparency","Improve cash flow","Reduce financing options"],a:2},
+  {q:"If supplier credit period increases, operating cycle will:",o:["Increase","Decrease","Remain same","Double"],a:1},
+  {q:"Inventory shortage leads to:",o:["Idle funds","Stockouts","Excess profit","Lower risk"],a:1},
+  {q:"Factoring helps in:",o:["Increasing inventory","Reducing receivables","Increasing liabilities","Reducing sales"],a:1},
+  {q:"A firm increases cash reserves. Risk will:",o:["Increase","Decrease","Remain same","Double"],a:1},
+  {q:"Faster collection from debtors leads to:",o:["Poor liquidity","Better cash flow","High risk","Low profit"],a:1},
+  {q:"Inventory turnover increases implies:",o:["Slow sales","Faster movement of goods","High stock levels","Poor management"],a:1},
+  {q:"Reverse factoring depends on:",o:["Supplier risk","Buyer credit quality","Government subsidy","Inventory level"],a:1},
+  {q:"Digital SCF reduces:",o:["Transparency","Speed","Fraud risk","Data availability"],a:2},
+  {q:"Which policy has highest risk?",o:["Policy A","Policy B","Policy C","All equal"],a:2},
+  {q:"High receivables indicate:",o:["Strong liquidity","Poor credit control","Low sales","No risk"],a:1},
+  {q:"Excess working capital leads to:",o:["High ROI","Idle funds","Low assets","High efficiency"],a:1},
+  {q:"Inadequate working capital results in:",o:["Smooth operations","Payment delays","High profit","Excess liquidity"],a:1},
+  {q:"A firm with strict credit policy may:",o:["Increase sales","Lose customers","Increase receivables","Reduce cash"],a:1},
+  {q:"High liquidity generally results in:",o:["High profitability","Low profitability","No relation","Zero profit"],a:1},
+  {q:"SCF ecosystem shift is towards:",o:["Asset-based lending","Flow-based financing","Cash-only system","Manual processes"],a:1},
+  {q:"AI in SCF helps in:",o:["Increasing delays","Risk assessment","Reducing data","Manual errors"],a:1},
+  {q:"Inventory holding cost increase leads to:",o:["Lower profit","Higher profit","No change","Zero cost"],a:0},
+  {q:"Longer production cycle results in:",o:["Lower working capital","Higher working capital","No effect","Less inventory"],a:1},
+  {q:"Best strategy to improve liquidity is:",o:["Increase receivables","Faster collections","Increase inventory","Reduce sales"],a:1},
+  {q:"Which option improves SCF efficiency most?",o:["Manual invoicing","Digital platforms","Paper records","Cash transactions"],a:1},
+  {q:"A firm should avoid excess working capital because:",o:["High liquidity","Low ROI","High profit","Low cost"],a:1},
+  {q:"Optimal working capital policy balances:",o:["Risk and return","Sales and cost","Assets and liabilities","Demand and supply"],a:0},
+  {q:"Which SCF tool is best for MSMEs?",o:["Equity financing","TReDS","Bonds","IPO"],a:1},
+  {q:"To reduce operating cycle, firm should:",o:["Increase inventory","Reduce receivable period","Increase credit period to customers","Increase WIP"],a:1},
+  {q:"Best way to manage payables is:",o:["Early payment always","Delay beyond due date","Pay on last due date","Ignore suppliers"],a:2},
+  {q:"Inventory management aims to:",o:["Maximize stock","Minimize stockouts and cost","Eliminate stock","Increase risk"],a:1},
+  {q:"SCF innovation is mainly driven by:",o:["Manual systems","Digitalization","Paper invoices","Local trade only"],a:1},
+  {q:"A balanced SCF system ensures:",o:["High risk only","High liquidity only","Optimal liquidity, risk, and profitability","Zero profit"],a:2}
+];
+
+const STORAGE_KEY = 'scf_quiz_attempts';
+let student = {};
+let currentQ = 0;
+let answers = new Array(50).fill(null);
+let locked = new Array(50).fill(false);
+let resultChart = null;
+
+function getAttempts() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveAttempt(data) {
+  const attempts = getAttempts();
+  attempts.push(data);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(attempts));
+}
+
+function showPage(id) {
+  ['page-register','page-quiz','page-result'].forEach(p => document.getElementById(p).style.display = 'none');
+  document.getElementById(id).style.display = 'block';
+}
+
+function startQuiz() {
+  const name = document.getElementById('inp-name').value.trim();
+  const roll = document.getElementById('inp-roll').value.trim();
+  const email = document.getElementById('inp-email').value.trim();
+  let valid = true;
+
+  ['err-name','err-roll','err-email','err-duplicate'].forEach(e => document.getElementById(e).style.display = 'none');
+
+  if (!name) { document.getElementById('err-name').style.display = 'block'; valid = false; }
+  if (!roll) { document.getElementById('err-roll').style.display = 'block'; valid = false; }
+  if (!email || !email.includes('@')) { document.getElementById('err-email').style.display = 'block'; valid = false; }
+  if (!valid) return;
+
+  const emailLower = email.toLowerCase().trim();
+  const nameLower = name.toLowerCase().trim();
+  const attempts = getAttempts();
+  const duplicate = attempts.find(a => a.email.toLowerCase() === emailLower && a.name.toLowerCase() === nameLower);
+  if (duplicate) { document.getElementById('err-duplicate').style.display = 'block'; return; }
+
+  student = { name, roll, email };
+  currentQ = 0;
+  answers = new Array(50).fill(null);
+  locked = new Array(50).fill(false);
+
+  document.getElementById('quiz-student-name').textContent = name + ' | ' + roll;
+  showPage('page-quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[currentQ];
+  document.getElementById('prog-label').textContent = `Question ${currentQ+1} of 50`;
+  document.getElementById('prog-bar').style.width = ((currentQ+1)/50*100) + '%';
+  document.getElementById('q-number').textContent = `Q${currentQ+1}`;
+  document.getElementById('q-text').textContent = q.q;
+
+  const optDiv = document.getElementById('q-options');
+  optDiv.innerHTML = '';
+  const labels = ['A','B','C','D'];
+  q.o.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = labels[i] + '. ' + opt;
+    btn.onclick = () => selectAnswer(i);
+
+    if (locked[currentQ]) {
+      btn.disabled = true;
+      if (answers[currentQ] === i) {
+        btn.classList.add(i === q.a ? 'correct' : 'wrong');
+      } else if (i === q.a) {
+        btn.classList.add('reveal');
+      }
+    } else if (answers[currentQ] !== null) {
+      btn.disabled = true;
+      if (answers[currentQ] === i) {
+        btn.classList.add(i === q.a ? 'correct' : 'wrong');
+      } else if (i === q.a) {
+        btn.classList.add('reveal');
+      }
+    }
+    optDiv.appendChild(btn);
+  });
+
+  const fb = document.getElementById('q-feedback');
+  if (answers[currentQ] !== null) {
+    const isCorrect = answers[currentQ] === q.a;
+    fb.style.display = 'block';
+    fb.className = 'feedback ' + (isCorrect ? 'correct-msg' : 'wrong-msg');
+    fb.textContent = isCorrect ? '✓ Correct!' : '✗ Wrong. Correct answer: ' + labels[q.a] + '. ' + q.o[q.a];
+  } else {
+    fb.style.display = 'none';
+  }
+
+  document.getElementById('btn-prev').disabled = currentQ === 0;
+  const nextBtn = document.getElementById('btn-next');
+  if (currentQ === 49) {
+    nextBtn.textContent = 'Submit Quiz';
+    nextBtn.onclick = submitQuiz;
+  } else {
+    nextBtn.textContent = 'Next →';
+    nextBtn.onclick = nextQ;
+  }
+}
+
+function selectAnswer(idx) {
+  if (answers[currentQ] !== null) return;
+  const q = QUESTIONS[currentQ];
+  answers[currentQ] = idx;
+  locked[currentQ] = true;
+  renderQuestion();
+}
+
+function nextQ() {
+  if (currentQ < 49) { currentQ++; renderQuestion(); }
+}
+function prevQ() {
+  if (currentQ > 0) { currentQ--; renderQuestion(); }
+}
+
+function submitQuiz() {
+  let correct = 0, wrong = 0, skip = 0;
+  answers.forEach((a, i) => {
+    if (a === null) skip++;
+    else if (a === QUESTIONS[i].a) correct++;
+    else wrong++;
+  });
+  const score = correct;
+  const pct = Math.round(score / 50 * 100);
+  let grade, gradeClass;
+  if (pct >= 80) { grade = 'Grade A'; gradeClass = 'grade-a'; }
+  else if (pct >= 60) { grade = 'Grade B'; gradeClass = 'grade-b'; }
+  else if (pct >= 40) { grade = 'Grade C'; gradeClass = 'grade-c'; }
+  else { grade = 'Grade D'; gradeClass = 'grade-d'; }
+
+  const attempt = { name: student.name, roll: student.roll, email: student.email, score, correct, wrong, skip, pct, grade, date: new Date().toISOString(), answers: [...answers] };
+  saveAttempt(attempt);
+  lastAttemptData = attempt;
+
+  document.getElementById('res-student').textContent = student.name + ' | ' + student.roll + ' | ' + student.email;
+  const gradeBadge = document.getElementById('res-grade');
+  gradeBadge.textContent = grade;
+  gradeBadge.className = 'grade-badge ' + gradeClass;
+  document.getElementById('res-score').textContent = score;
+  document.getElementById('res-correct').textContent = correct;
+  document.getElementById('res-wrong').textContent = wrong;
+  document.getElementById('res-skip').textContent = skip;
+
+  showPage('page-result');
+  renderChart(correct, wrong, skip);
+  renderReview();
+}
+
+function renderChart(correct, wrong, skip) {
+  if (resultChart) { resultChart.destroy(); }
+  const ctx = document.getElementById('result-chart').getContext('2d');
+  resultChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Correct', 'Wrong', 'Unanswered'],
+      datasets: [{
+        label: 'Questions',
+        data: [correct, wrong, skip],
+        backgroundColor: ['#68d391','#fc8181','#f6ad55'],
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, title: { display: true, text: 'Performance Summary', font: { size: 14 } } },
+      scales: { y: { beginAtZero: true, max: 50, ticks: { stepSize: 10 } } }
+    }
+  });
+}
+
+function renderReview() {
+  const list = document.getElementById('review-list');
+  list.innerHTML = '';
+  const labels = ['A','B','C','D'];
+  QUESTIONS.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    const ans = answers[i];
+    const isCorrect = ans === q.a;
+    const ansText = ans !== null ? labels[ans] + '. ' + q.o[ans] : 'Not answered';
+    const correctText = labels[q.a] + '. ' + q.o[q.a];
+    div.innerHTML = `<div class="review-q">Q${i+1}. ${q.q}</div>
+      <div class="review-ans">Your answer: <span class="${ans !== null && isCorrect ? 'review-correct' : 'review-wrong'}">${ansText}</span></div>
+      ${!isCorrect ? `<div class="review-ans">Correct answer: <span class="review-correct">${correctText}</span></div>` : ''}`;
+    list.appendChild(div);
+  });
+}
+
+function downloadReport() {
+  const attempts = getAttempts();
+  const last = attempts[attempts.length - 1];
+  if (!last) return;
+  const labels = ['A','B','C','D'];
+  let rows = QUESTIONS.map((q, i) => {
+    const ans = last.answers[i];
+    const isC = ans === q.a;
+    const yourAns = ans !== null ? labels[ans] + '. ' + q.o[ans] : 'Not answered';
+    const corrAns = labels[q.a] + '. ' + q.o[q.a];
+    return `<tr style="background:${i%2===0?'#f9f9f9':'white'}">
+      <td style="padding:6px 8px;border:1px solid #ddd">${i+1}</td>
+      <td style="padding:6px 8px;border:1px solid #ddd">${q.q}</td>
+      <td style="padding:6px 8px;border:1px solid #ddd;color:${isC?'#276749':'#c53030'}">${yourAns}</td>
+      <td style="padding:6px 8px;border:1px solid #ddd;color:#276749">${corrAns}</td>
+      <td style="padding:6px 8px;border:1px solid #ddd;text-align:center;font-weight:bold;color:${isC?'#276749':'#c53030'}">${isC?'✓':'✗'}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>SCF Quiz Report</title>
+  <style>body{font-family:Arial,sans-serif;margin:2rem;color:#1a202c}h1{color:#1e3a5f}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#1e3a5f;color:white;padding:8px;border:1px solid #ddd}.summary{display:flex;gap:2rem;margin:1rem 0}.summary div{background:#f0f4f8;padding:1rem 1.5rem;border-radius:8px;text-align:center}.summary .val{font-size:1.8rem;font-weight:700;color:#1e3a5f}.summary .lbl{font-size:0.8rem;color:#718096}</style>
+  </head><body>
+  <h1>Supply Chain Finance Quiz — Score Report</h1>
+  <p><strong>Name:</strong> ${last.name} &nbsp;|&nbsp; <strong>Roll No:</strong> ${last.roll} &nbsp;|&nbsp; <strong>Email:</strong> ${last.email}</p>
+  <p><strong>Date:</strong> ${new Date(last.date).toLocaleString()}</p>
+  <div class="summary">
+    <div><div class="val">${last.score}/50</div><div class="lbl">Score</div></div>
+    <div><div class="val">${last.pct}%</div><div class="lbl">Percentage</div></div>
+    <div><div class="val" style="color:#276749">${last.correct}</div><div class="lbl">Correct</div></div>
+    <div><div class="val" style="color:#c53030">${last.wrong}</div><div class="lbl">Wrong</div></div>
+    <div><div class="val" style="color:#dd6b20">${last.skip}</div><div class="lbl">Skipped</div></div>
+    <div><div class="val">${last.grade}</div><div class="lbl">Grade</div></div>
+  </div>
+  <table><thead><tr><th>#</th><th>Question</th><th>Your Answer</th><th>Correct Answer</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table>
+  </body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `SCF_Quiz_Report_${last.name.replace(/\s+/g,'_')}.html`;
+  a.click();
+}
+
+// ── GOOGLE SHEETS INTEGRATION ──────────────────────────────────────────────
+// STEP: Replace the URL below with your Google Apps Script Web App URL
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw7qAtRClJoxjRtR1926KdAg1CpiEg3Hsop_EbDhhBSABttHMyCGBdAQQU3l4kASIjG/exec';
+
+let lastAttemptData = null; // store for submission
+
+function submitToSheets() {
+  if (!lastAttemptData) return;
+  if (APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbw7qAtRClJoxjRtR1926KdAg1CpiEg3Hsop_EbDhhBSABttHMyCGBdAQQU3l4kASIjG/exec') {
+    showSubmitStatus('⚠️ Apps Script URL not configured yet. Please follow the setup guide.', '#dd6b20');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  showSubmitStatus('Sending your score…', '#2b6cb0');
+
+  const payload = {
+    name: lastAttemptData.name,
+    roll: lastAttemptData.roll,
+    email: lastAttemptData.email,
+    score: lastAttemptData.score,
+    correct: lastAttemptData.correct,
+    wrong: lastAttemptData.wrong,
+    skipped: lastAttemptData.skip,
+    percentage: lastAttemptData.pct,
+    grade: lastAttemptData.grade,
+    timestamp: new Date().toLocaleString('en-IN', {timeZone:'Asia/Kolkata'})
+  };
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(() => {
+    btn.textContent = '✓ Score Submitted!';
+    btn.style.background = '#276749';
+    showSubmitStatus('✅ Your score has been successfully sent to the teacher!', '#276749');
+    document.getElementById('submit-btn').disabled = true;
+  })
+  .catch(() => {
+    btn.disabled = false;
+    btn.textContent = 'Retry Submission';
+    showSubmitStatus('❌ Submission failed. Please check your internet and try again.', '#c53030');
+  });
+}
+
+function showSubmitStatus(msg, color) {
+  const el = document.getElementById('submit-status');
+  el.style.display = 'block';
+  el.style.color = color;
+  el.textContent = msg;
+}
+// ───────────────────────────────────────────────────────────────────────────
+
+// Init
+showPage('page-register');
+</script>
+</body>
+</html>
